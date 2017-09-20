@@ -1,0 +1,22 @@
+<link rel="import" href="../iron-request/iron-request.html">
+
+<script>
+  window.addEventListener('WebComponentsReady', function() {
+    let ironRequestPrototype = window.customElements.get('iron-request').prototype;
+    ironRequestPrototype.send = function() {
+      Polymer.Async.timeOut.run(() => {
+        this._setResponse(MockAjax.response);
+
+        this.resolveCompletes(this);
+      }, 500);
+
+      return this.completes;
+    }
+  });
+
+  // export
+  var MockAjax = {
+    latency: 1,
+    response: '{"mock": "data"}'
+  };
+</script>

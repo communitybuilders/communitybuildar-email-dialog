@@ -1,0 +1,169 @@
+<link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-spinner/paper-spinner.html">
+<link rel="import" href="../paper-dialog/paper-dialog.html">
+
+<dom-module id="communitybuildar-email-dialog">
+  <template>
+    <style include="paper-dialog-shared-styles">
+      /* Styles copied from paper-dialog-shared-styles  as it does not
+         allow us to style paper-dialog implementations as it uses the ::slotted
+         selector */
+      .container {
+        width: 500px;
+      }
+
+      .container > * {
+        margin-top: 20px;
+        padding: 0 24px;
+      }
+
+      /* In 1.x, this selector was `:host > ::content h2`. In 2.x <slot> allows
+      to only select only direct children, which increases the weight of this
+      selector, so we have to move it before first-child/last-child selectors */
+      h2 {
+        position: relative;
+        margin: 0;
+        @apply --paper-font-title;
+        @apply --paper-dialog-title;
+      }
+
+      .container > :first-child {
+        margin-top: 24px;
+      }
+
+      .container > :last-child {
+        margin-bottom: 24px;
+      }
+
+      .container > .buttons {
+        position: relative;
+        padding: 8px 8px 8px 24px;
+        margin: 0;
+        color: var(--paper-dialog-button-color, var(--primary-color));
+        @apply --layout-horizontal;
+        @apply --layout-end-justified;
+      }
+
+      [hidden] {
+        display: none;
+      }
+    </style>
+
+    <iron-ajax id="emailAjax"
+        with-credentials
+        url="[[url]]"
+        method="[[method]]"
+        body="[[data]]"
+        on-response="_handleResponse"
+        loading="{{loading}}"></iron-ajax>
+
+    <div class="container">
+      <h2>[[title]]</h2>
+
+      <paper-input autofocus
+          label="[[label]]"
+          value="{{recipient}}"
+          error-message="[[_errorMessage]]"
+          invalid$="[[_invalid]]"></paper-input>
+
+      <div class="buttons">
+        <paper-button raised on-tap="sendEmail" disabled$="[[loading]]">
+          <span hidden$="[[loading]]">Email</span>
+          <paper-spinner hidden$=[[!loading]] active$="[[loading]]"></paper-spinner>
+        </paper-button>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    /**
+     * `communitybuildar-email-dialog`
+     *
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class CommunitybuildarEmailDialog extends window.customElements.get('paper-dialog') {
+      static get is() {
+        return 'communitybuildar-email-dialog';
+      }
+
+      static get properties() {
+        return {
+          title: {
+            type: String,
+            value: 'Send email'
+          },
+          label: {
+            type: String,
+            value: 'Email to:'
+          },
+          recipient: {
+            type: String,
+            notify: true,
+          },
+          url: String,
+          method: {
+            type: String,
+            value: 'get',
+          },
+          body: Object,
+          response: {
+            type: Object,
+            readOnly: true,
+            notify: true,
+          },
+          loading: {
+            type: Boolean,
+            value: false,
+          },
+        };
+      }
+
+      sendEmail() {
+        // Clear any previous errors.
+        this._invalid = false;
+
+        this.$.emailAjax.generateRequest();
+      }
+
+      _handleResponse(e) {
+        // Stop immediate propagation as we will manually
+        // fire the 'response' event for our host to ensure that
+        // the host handler (if any exists) is fired before our default
+        // handler.
+        e.stopImmediatePropagation();
+
+        let request = e.detail;
+        this._setResponse(request.response);
+
+        // Fire the 'response' event manually for our host.
+        let overriddenEvent = this.fire('response', request, {
+          cancelable: true,
+          bubbles: true,
+          composed: true,
+        });
+
+        if( overriddenEvent.defaultPrevented ) {
+          // The host element has prevented the default action
+          // of our event.
+          return;
+        }
+
+        // Default handle
+        if( this.response.success ) {
+          this.close();
+        }else {
+          this._invalid = true;
+          this._errorMessage = this.response.error;
+        }
+      }
+    }
+
+    window.customElements.define(CommunitybuildarEmailDialog.is, CommunitybuildarEmailDialog);
+  </script>
+</dom-module>

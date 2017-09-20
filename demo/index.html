@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+  <title>communitybuildar-email-dialog demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="mock-ajax.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../communitybuildar-email-dialog.html">
+
+  <custom-style>
+    <style is="custom-style" include="demo-pages-shared-styles"></style>
+  </custom-style>
+</head>
+<body>
+<div class="vertical-section-container centered">
+  <h3>Basic communitybuildar-email-dialog demo</h3>
+  <demo-snippet>
+    <template>
+      Press the letter "o" to open the dialog.
+
+      <communitybuildar-email-dialog with-backdrop
+          recipient="{{recipient}}"
+          url="http://dev.icca.social-payments.myelectorate.com.au/ajax/emailpaymentreceipt/payment_id/[[_paymentId]]/recipient/[[recipient]]"
+          on-response="onResponse"></communitybuildar-email-dialog>
+    </template>
+  </demo-snippet>
+
+  <dom-bind>
+    <template>
+      <communitybuildar-email-dialog opened
+          with-backdrop
+          id="emailDialog"
+          recipient="{{recipient}}"
+          url="http://dev.icca.social-payments.myelectorate.com.au/ajax/emailpaymentreceipt/payment_id/[[_paymentId]]/recipient/[[recipient]]"
+          on-response="onResponse"></communitybuildar-email-dialog>
+      [[details]]
+    </template>
+  </dom-bind>
+
+  <script>
+    MockAjax = {
+      latency: 500,
+      response: {
+        error: "Example failed response.",
+      },
+    };
+
+    let scope = document.querySelector('dom-bind');
+
+    window.addEventListener('keydown', (e) => {
+      let key = e.which ? e.which : e.keyCode;
+
+      if( key === 79 ) {
+        // o pressed, open dialog.
+        scope.$.emailDialog.open();
+      }
+    });
+
+    scope.onResponse = function (e) {
+      console.log("Response: ", e.detail.response);
+
+      if( e.detail.response.error ) {
+        MockAjax.response = {
+          success: true,
+        };
+
+        scope.details = 'Click again to simulate default behaviour of a successful response.';
+
+        console.log("You may call e.preventDefault() to prevent the default send email response handler from running.");
+      }
+    };
+
+    // Set the initial email address
+    emailDialog.recipient = "someones@email.com.au"
+  </script>
+</div>
+</body>
+</html>
